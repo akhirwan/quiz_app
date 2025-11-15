@@ -2,7 +2,7 @@
 
 project demo is running in [Python Anywhere](https://akhirwan.pythonanywhere.com/)
 
-instalation on terminal (ubuntu):
+instalation on local terminal (ubuntu):
 
 - make sure you have MySQL and git is installed in your device
 - create database in MySQL
