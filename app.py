@@ -1,14 +1,17 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from models import db, Users, Questions
 from weather import get_weather
+from dotenv import load_dotenv
 from urllib.parse import quote_plus
-import random
+import os
+
+load_dotenv()
+
+password = quote_plus(os.getenv('DB_PWD'))
 
 app = Flask(__name__)
-app.secret_key = 'supersecretkey'
-
-password = quote_plus("@dmiN_123")
-app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://h_irwan:{password}@localhost/quiz_db"
+app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://{os.getenv('DB_USERNAME')}:{password}@{os.getenv('DB_HOST')}/{os.getenv('DB_NAME')}"
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
