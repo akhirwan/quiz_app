@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Quiz App</h2>
+<h3>Question {{ total }} of {{ total }}</h3>
+<p>Your Score: {{ user.score }}</p>
+<div style="margin-top: 10px;">
+  <a href="{{ url_for('restart_quiz') }}">
+    <button>
+      Restart Quiz
+    </button>
+  </a>
+</div>
+
+{% endblock %}
+

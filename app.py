@@ -4,6 +4,7 @@ from weather import get_weather
 from dotenv import load_dotenv
 from urllib.parse import quote_plus
 import os
+import random
 
 load_dotenv()
 
@@ -80,118 +81,186 @@ def login():
     
   return render_template('login.html')
 
+# @app.route('/quiz')
+# def quiz():
+#   if 'user_id' not in session:
+#     return redirect(url_for('login'))
+  
+#   # get user
+#   user = Users.query.get(session['user_id'])
+  
+#   # Ambil semua pertanyaan urut berdasarkan ID paling kecil
+#   questions = Questions.query.order_by(Questions.id.asc()).all()
+#   total_questions = len(questions)
+  
+#   if total_questions == 0:
+#     return render_template('no_questions.html')
+  
+#   # Jika belum ada index dalam session → set ke 1
+#   if 'current_index' not in session:
+#     session['current_index'] = 1
+    
+#   # Pastikan index tidak keluar batas
+#   if session['current_index'] < 1:
+#     session['current_index'] = 1
+    
+#   if session['current_index'] > total_questions:
+#     session['current_index'] = total_questions
+    
+#   # Ambil pertanyaan sesuai posisi
+#   question = questions[session['current_index'] - 1]
+#   return render_template(
+#     'quiz.html',
+#     question=question,
+#     index=session['current_index'],
+#     total=total_questions,
+#     score=user.score
+#   )
+
 @app.route('/quiz')
 def quiz():
+  # User must be logged in
   if 'user_id' not in session:
     return redirect(url_for('login'))
   
-  # Ambil user
   user = Users.query.get(session['user_id'])
   
-  # Ambil semua pertanyaan urut berdasarkan ID paling kecil
-  questions = Questions.query.order_by(Questions.id.asc()).all()
-  total_questions = len(questions)
+  # Create a randomized question order ONLY once per session
+  if 'question_order' not in session:
+    # Fetch all question IDs
+    all_ids = [q.id for q in Questions.query.all()]
+    
+    # If no questions exist, show "no questions" page
+    if not all_ids:
+      return render_template('no_questions.html')
+    
+    # Shuffle question order and save into session
+    random.shuffle(all_ids)
+    session['question_order'] = all_ids
+    
+    # Set the starting index to 0 (first question)
+    session['current_index'] = 0
+    
+  # Get the saved question order from session
+  question_order = session['question_order']
+  total_questions = len(question_order)
   
-  if total_questions == 0:
-    return render_template('no_questions.html')
+  # Ensure index stays within valid range
+  if session['current_index'] < 0:
+    session['current_index'] = 0
+    
+  if session['current_index'] >= total_questions:
+    # session['current_index'] = total_questions - 1
+    return redirect(url_for('quiz_finished', total=total_questions))
+    
+  # Get the question ID based on randomized order
+  question_id = question_order[session['current_index']]
+  question = Questions.query.get(question_id)
   
-  # Jika belum ada index dalam session → set ke 1
-  if 'current_index' not in session:
-    session['current_index'] = 1
-    
-  # Pastikan index tidak keluar batas
-  if session['current_index'] < 1:
-    session['current_index'] = 1
-    
-  if session['current_index'] > total_questions:
-    session['current_index'] = total_questions
-    
-  # Ambil pertanyaan sesuai posisi
-  question = questions[session['current_index'] - 1]
+  # Render the quiz page with current question and user score
   return render_template(
     'quiz.html',
     question=question,
-    index=session['current_index'],
+    index=session['current_index'] + 1,  # for display (1-based)
     total=total_questions,
     score=user.score
   )
 
-@app.route('/quiz/next')
-def quiz_next():
-  if 'user_id' not in session:
-    return redirect(url_for('login'))
+# @app.route('/quiz/next')
+# def quiz_next():
+#   if 'user_id' not in session:
+#     return redirect(url_for('login'))
 
-  total = Questions.query.count()
+#   total = Questions.query.count()
 
-  if session.get('current_index', 1) < total:
+#   if session.get('current_index', 1) < total:
+#     session['current_index'] += 1
+
+#   return redirect(url_for('quiz'))
+
+# @app.route('/quiz/previous')
+# def quiz_previous():
+#   if 'user_id' not in session:
+#     return redirect(url_for('login'))
+
+#   if session.get('current_index', 1) > 1:
+#     session['current_index'] -= 1
+
+#   return redirect(url_for('quiz'))
+
+@app.route('/next')
+def next_question():
+  if 'current_index' in session:
     session['current_index'] += 1
-
   return redirect(url_for('quiz'))
 
-@app.route('/quiz/previous')
-def quiz_previous():
-  if 'user_id' not in session:
-    return redirect(url_for('login'))
-
-  if session.get('current_index', 1) > 1:
+@app.route('/prev')
+def prev_question():
+  if 'current_index' in session:
     session['current_index'] -= 1
-
   return redirect(url_for('quiz'))
+
+@app.route('/quiz_finished')
+def quiz_finished():
+  total_questions = request.args.get('total', 0)
+  user = Users.query.get(session['user_id'])
+  print(user)
+  return render_template('quiz_finished.html', total=total_questions, user=user)
 
 @app.route('/answer/<int:question_id>', methods=['POST'])
 def answer(question_id):
-    # Aman: jika user tidak memilih jawaban
-    selected = request.form.get('option')
-
-    question = Questions.query.get(question_id)
-    users = Users.query.get(session['user_id'])
-
-    # Jika user tidak memilih jawaban
-    if not selected:
-        flash("Pilih salah satu jawaban sebelum melanjutkan!", "warning")
-        # tetap di pertanyaan SAMA
-        return redirect(url_for('quiz'))
-
-    # Jika jawaban benar → tambah skor
-    if selected == question.correct_option:
-        users.score += 10
-        db.session.commit()
-
-    # --- PENTING: Selalu pindah ke pertanyaan berikut ---
-    current_index = session.get('current_index', 1)
-    total = Questions.query.count()
-
-    # Jika masih ada pertanyaan berikutnya
-    if current_index < total:
-        session['current_index'] = current_index + 1
-    else:
-        # Jika pertanyaan sudah habis
-        flash("Kuis selesai! Tidak ada pertanyaan lagi.", "info")
-        return redirect(url_for('result'))
-
+  # if no choosed answer
+  selected = request.form.get('option')
+  question = Questions.query.get(question_id)
+  users = Users.query.get(session['user_id'])
+  
+  if not selected:
+    flash("choose one answer!", "warning")
+    # stay in same question
     return redirect(url_for('quiz'))
+  
+  # if correct add score
+  if selected == question.correct_option:
+    users.score += 10
+    db.session.commit()
+    
+  # next question
+  current_index = session.get('current_index', 1)
+  total = Questions.query.count()
+  
+  # if available next question
+  if current_index < total:
+    session['current_index'] = current_index + 1
+  else:
+    # if all questions answered
+    flash("Quiz is done! no more question.", "info")
+    return redirect(url_for('result'))
+  
+  return redirect(url_for('quiz'))
 
 @app.route('/result')
 def result():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
+  if 'user_id' not in session:
+    return redirect(url_for('login'))
+  
+  user = Users.query.get(session['user_id'])
+  total_questions = Questions.query.count()
+  
+  return render_template(
+    'result.html',
+    score=user.score,
+    total=total_questions
+  )
 
-    user = Users.query.get(session['user_id'])
-    total_questions = Questions.query.count()
-
-    return render_template(
-        'result.html',
-        score=user.score,
-        total=total_questions
-    )
-
-@app.route('/restart', methods=['POST'])
+# @app.route('/restart', methods=['POST'])
+@app.route('/restart')
 def restart_quiz():
-    session['current_index'] = 1
-    user = Users.query.get(session['user_id'])
-    user.score = 0
-    db.session.commit()
-    return redirect(url_for('quiz'))
+  session['current_index'] = 0
+  user = Users.query.get(session['user_id'])
+  user.score = 0
+  db.session.commit()
+  
+  return redirect(url_for('quiz'))
 
 @app.route('/leaderboard')
 def leaderboard():
@@ -200,9 +269,11 @@ def leaderboard():
 
 @app.route('/logout')
 def logout():
+  user = Users.query.get(session['user_id'])
+  user.score = 0
+  db.session.commit()
   session.clear()
   return redirect(url_for('index'))
 
 if __name__ == '__main__':
-  app.run(debug=True)
-  # app.run(debug=True, port=4040)
+  app.run(debug=True) # default run at port 5000
