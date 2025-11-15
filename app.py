@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
-from models import db, Users, Questions
+from models import db, bcrypt, Users, Questions
 from weather import get_weather
 from dotenv import load_dotenv
 from urllib.parse import quote_plus
@@ -15,6 +15,7 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
+bcrypt.init_app(app)
 
 with app.app_context():
   db.create_all()
