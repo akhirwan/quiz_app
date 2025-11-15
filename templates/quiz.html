@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Quiz App</h2>
+<h3>Question {{ index }} of {{ total }}</h3>
+<p>Your Score: {{ score }}</p>
+<hr>
+<form method="post" action="{{ url_for('answer', question_id=question.id) }}">
+  <p>{{ question.question_text }}</p>
+  <label>
+    <input type="radio" name="option" value="A" required> {{ question.option_a }}
+  </label><br>
+  <label>
+    <input type="radio" name="option" value="B"> {{ question.option_b }}
+  </label><br>
+  <label>
+    <input type="radio" name="option" value="C"> {{ question.option_c }}
+  </label><br>
+  <label>
+    <input type="radio" name="option" value="D"> {{ question.option_d }}
+  </label><br>
+  <br>
+  <button type="submit">Jawab</button>
+</form>
+
+<br>
+<hr>
+
+<div style="margin-top: 10px;">
+
+  {% if index > 1 %}
+  <a href="{{ url_for('quiz_previous') }}">
+     <button>Previous</button>
+  </a>
+  {% endif %}
+
+  {% if index < total %}
+  <a href="{{ url_for('quiz_next') }}">
+    <button>Next</button>
+  </a>
+  {% endif %}
+
+</div>
+
+{% endblock %}
+

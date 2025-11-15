@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h2>Hasil Kuis</h2>
+
+<p>Skor Akhir Anda: <strong>{{ score }}</strong></p>
+<p>Total Pertanyaan: <strong>{{ total }}</strong></p>
+
+{% if score == total * 10 %}
+    <p>🎉 Luar biasa! Kamu menjawab semua pertanyaan dengan benar!</p>
+{% elif score >= (total * 10 / 2) %}
+    <p>👍 Bagus! Kamu menjawab lebih dari setengah dengan benar.</p>
+{% else %}
+    <p>🙂 Tidak apa-apa, tetap semangat belajar!</p>
+{% endif %}
+
+<br>
+
+<form method="post" action="{{ url_for('restart_quiz') }}">
+    <button type="submit">Ulangi Kuis</button>
+</form>
+
+{% endblock %}

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='UTF-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+  <title>Quiz App</title>
+  <link rel='stylesheet' href='{{ url_for('static', filename='style.css') }}'>
+</head>
+<body>
+<header>
+  <nav>
+    <a href="{{ url_for('index') }}">Home</a>
+    {% if 'user_id' not in session %}
+      <a href="{{ url_for('register') }}">Registration</a>
+      <a href="{{ url_for('login') }}">Login</a>
+    {% else %}
+      <a href="{{ url_for('quiz') }}">Quiz</a>
+      <a href="{{ url_for('leaderboard') }}">Leaderboard</a>
+      <a href="{{ url_for('logout') }}">Logout</a>
+    {% endif %}
+  </nav>
+</header>
+
+<main class="container">
+  {% block content %}{% endblock %}
+</main>
+
+<footer>
+  <p>Developed by: Akhirwan</p>
+</footer>
+
+</body>
+</html>

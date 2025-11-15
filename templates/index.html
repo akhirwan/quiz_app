@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h1>Welcome to quiz app site</h1>
+<div class="weather-wrapper">
+  <form method="get" class="weather-form">
+    <input type="text" name="city" placeholder="Input city ...">
+    <button type="submit">Weather Info</button>
+  </form>
+
+  {% if error %}
+    <p class="error">{{ error }}</p>
+  {% endif %}
+
+  {% if weather %}
+    <h2>Weather Forecast for {{ request.args.get('city') }}</h2>
+    <table class="weather-table">
+      <tr>
+        <th>Date</th>
+        <th>Day Temperature</th>
+        <th>Night Temperature</th>
+      </tr>
+      {% for day in weather %}
+      <tr>
+        <td>{{ day.day }}</td>
+        <td>{{ day.temp_day }}°C</td>
+        <td>{{ day.temp_night }}°C</td>
+      </tr>
+      {% endfor %}
+    </table>
+  {% endif %}
+</div>
+{% endblock %}
