@@ -14,6 +14,7 @@ def get_weather(city):
     return {'error': f"Gagal mengambil data cuaca: {error_message}"}  
   forecast = []
   try:
+    # print(f"{response}")
     for i in [0, 8, 16]:  # hari ini, besok, lusa
       day_data = response['list'][i]
       date = datetime.fromtimestamp(day_data['dt'])
